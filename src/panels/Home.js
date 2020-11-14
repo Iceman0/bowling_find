@@ -3,17 +3,71 @@ import PropTypes from 'prop-types';
 import Panel from '@vkontakte/vkui/dist/components/Panel/Panel';
 import PanelHeader from '@vkontakte/vkui/dist/components/PanelHeader/PanelHeader';
 import Button from '@vkontakte/vkui/dist/components/Button/Button';
-import {FormLayout, FormLayoutGroup, Input} from '@vkontakte/vkui/';
+import {FormLayout, FormLayoutGroup, Input, Snackbar, Icon24Favorite} from '@vkontakte/vkui/';
 import Group from '@vkontakte/vkui/dist/components/Group/Group';
 import Cell from '@vkontakte/vkui/dist/components/Cell/Cell';
 import Div from '@vkontakte/vkui/dist/components/Div/Div';
 import Avatar from '@vkontakte/vkui/dist/components/Avatar/Avatar';
+import bridge from '@vkontakte/vk-bridge';
+import {btnSendClick} from './../utils/sendCLick'
+import {Row, Col, Table} from 'antd'
+import 'antd/dist/antd.css';
+
+const orangeBackground = {
+    backgroundImage: 'linear-gradient(135deg, #ffb73d, #ffa000)'
+};
+
+const dataSource = [
+    {
+        key: '1',
+        name: 'Mike',
+        age: 32,
+        address: '10 Downing Street',
+    },
+    {
+        key: '2',
+        name: 'John',
+        age: 42,
+        address: '10 Downing Street',
+    },
+];
+
+const bufColumns = [
+    {
+        title: 'Name',
+        dataIndex: 'name',
+        key: 'name',
+    },
+    {
+        title: 'Age',
+        dataIndex: 'age',
+        key: 'age',
+    },
+    {
+        title: 'Address',
+        dataIndex: 'address',
+        key: 'address',
+    },
+];
 
 const Home = ({ id, go, fetchedUser }) => {
 
+    // const [count, setCount] = useState(0);
+    const [name, setName] = useState("");
+    const [findResult, setFindResult] =  useState([]);
+    const [columns, setColumns] =  useState(bufColumns);
+
+    // const onChange = (e) => {
+    //     let { value } = e.currentTarget;
+    //     if (((value <= 300 && value >= 0) || value === '')) setCount( (value === '') ? value : parseInt(value) );
+    // };
+
+    const btnFindClick = (name) => {
+        btnSendClick(name, setFindResult, setColumns)
+    };
 
     return (<Panel id={id}>
-            <PanelHeader>Example</PanelHeader>
+            <PanelHeader>Введите свой результат</PanelHeader>
             {fetchedUser &&
             <Group title="User Data Fetched with VK Bridge">
                 <Cell
@@ -26,27 +80,18 @@ const Home = ({ id, go, fetchedUser }) => {
 
             <Group title="Navigation Example">
                 <Div>
-                    <Button size="xl" level="2" onClick={go} data-to="persik">
-                    Show me the Persik, please
-                    </Button>
-                    {/*<FormLayout>*/}
-                        {/*<FormLayoutGroup top="Фамилия">*/}
-                            {/*<Input type="text" defaultValue="" placeholder="Введите фамилию"/>*/}
-                        {/*</FormLayoutGroup>*/}
-                        {/*<FormLayoutGroup top="Имя">*/}
-                            {/*<Input type="text" defaultValue="" placeholder="Введите имя"/>*/}
-                        {/*</FormLayoutGroup>*/}
-                        {/*<FormLayoutGroup top="Команда">*/}
-                            {/*<Input type="text" defaultValue="" placeholder="Введите название команды"/>*/}
-                        {/*</FormLayoutGroup>*/}
-                        {/*<Input type="number" placeholder="Повторите кол-во очков"/>*/}
-                        {/*<Button size="xl">Отправить</Button>*/}
-                    {/*</FormLayout>*/}
+                    <FormLayout className="bowl-Form">
+                        <FormLayoutGroup top="Поиск">
+                            <Input type="text" value={name} placeholder="Введите необходимые слова" onChange={e => setName(e.target.value)}/>
+                        </FormLayoutGroup>
+                        <Button size="xl" onClick={() => btnFindClick(name)}>Найти</Button>
+                    </FormLayout>
+                    {(findResult && findResult.length > 0) ? <Table dataSource={findResult} columns={columns} scroll={{ x: 1500 }} /> : ''}
                 </Div>
             </Group>
         </Panel>
     );
-}
+};
 
 Home.propTypes = {
     id: PropTypes.string.isRequired,
