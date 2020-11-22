@@ -1,0 +1,11 @@
+.table-spinner {
+    margin-top: 20px;
+    position: absolute;
+    z-index: 1;
+    top: 0px;
+    height: 90%;
+}
+
+.table-spinner-short {
+    margin-top: 20px;
+}

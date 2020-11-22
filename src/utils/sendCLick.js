@@ -1,9 +1,17 @@
-import bridge from '@vkontakte/vk-bridge';
-//import * from jQuery;
+import React from 'react'
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import auth from './auth.json';
+import Link from "@vkontakte/vkui/dist/es6/components/Link/Link";
 
-export const btnSendClick = (name, setFindResult, setColumns) => {
+function makeIntoLink(link) {
+    if (link.match(/^[a-zA-Z0-9]+(.com)/) && link.indexOf('https') === -1) {
+        //link.replace(link, "<a href=\"http://www." + link+ "\">" + link + "<\/a>"); <-- OLD
+        link = "https://" + link; // <-- NEW
+    }
+    return link;
+}
+
+export const btnSendClick = (name, setFindResult, setColumns, setLoading, myValue) => {
 
 // Config variables
     const SPREADSHEET_ID = auth.SPREADSHEET_ID;
@@ -26,6 +34,7 @@ export const btnSendClick = (name, setFindResult, setColumns) => {
             const result = await sheet.getRows();
             return(result);
         } catch (e) {
+            setLoading(false);
             console.error('Error: ', e);
             return([]);
         }
@@ -33,10 +42,10 @@ export const btnSendClick = (name, setFindResult, setColumns) => {
 
     const newRow = { Name: name};
 
+
     appendSpreadsheet(newRow)
         .then((value) => {
             let columns = (value.length) ? value[0]._sheet.headerValues : [];
-
             let dataSource = value.map(item => {
                 let result = Object.assign({}, item);
                 for(let i in result) {
@@ -45,26 +54,83 @@ export const btnSendClick = (name, setFindResult, setColumns) => {
                 if (result.id) result.key = result.id;
                 return result;
             }).filter(item => {
-                if (!name) return item;
+                if (!name) {
+                    return item;
+                }
                 let find = false;
-                for (let i in item) {
-                    if (typeof item[i] === 'string' && item[i].indexOf(name) > -1) {
-                        find = true;
-                        break;
+                if (myValue === undefined) {
+                    for (let i in item) {
+                        if (typeof item[i] === 'string' && item[i].toLowerCase().indexOf(name) > -1) {
+                            find = true;
+                            break;
+                        }
                     }
                 }
-                if (find) return item;
+                else {
+                    if (name)
+                        switch (name) {
+                            case 'lines_max':
+                                if (item['lines']) {
+                                    if (parseInt(myValue) >= parseInt(item['lines'])) {
+                                        find = true;
+                                    }
+                                }
+                                break;
+                            case 'lines_min':
+                                if (item['lines']) {
+                                    if (parseInt(myValue) <= parseInt(item['lines'])) {
+                                        find = true;
+                                    }
+                                }
+                                break;
+                            case 'price2':
+                                if (item[name]) {
+                                    if (parseInt(myValue) >= parseInt(item['price2'])) {
+                                        find = true;
+                                    }
+                                }
+                                break;
+                            case 'price1':
+                                if (item[name]) {
+                                    if (parseInt(myValue) <= parseInt(item['price1'])) {
+                                        find = true;
+                                    }
+                                }
+                                break;
+                            default:
+                                if (item[name]) {
+                                    if (item[name].toLowerCase().indexOf(myValue) > -1) {
+                                        find = true;
+                                    }
+                                }
+                                break;
+                        }
+                }
+                if (find) {
+                    return item;
+                }
             });
             for(let i = 0; i<columns.length; i++) {
-                columns[i] = {
+                if (columns[i] === 'link_vk') { debugger;
+                    columns[i] = {
+                        title: columns[i],
+                        dataIndex: columns[i],
+                        key: columns[i],
+                        render: text => <Link href={makeIntoLink(text)} target="_blank">{text}</Link>,
+                    }
+                } else columns[i] = {
                     title: columns[i],
                     dataIndex: columns[i],
                     key: columns[i]
                 }
             }
+            setLoading(false);
             setColumns(columns);
             setFindResult(dataSource);
         })
-        .catch((error) => console.error(error));
+        .catch((error) => {
+            setLoading(false);
+            console.error(error)
+        });
     //alert(JSON.stringify({name: name, surname: surname, team: team, count: count}));
 };
